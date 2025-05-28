@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { searchTaxa } from '../services/gbifService';
 import { Taxon } from '../types';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, ArrowRight } from 'lucide-react';
 
 interface TaxonSearchProps {
   onSelect: (taxon: Taxon) => void;
@@ -21,7 +21,6 @@ const TaxonSearch: React.FC<TaxonSearchProps> = ({
   const resultsRef = useRef<HTMLUListElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Search for taxa when query changes
   useEffect(() => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -48,7 +47,6 @@ const TaxonSearch: React.FC<TaxonSearchProps> = ({
     };
   }, [query]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (inputRef.current && !inputRef.current.contains(event.target as Node) && 
@@ -73,26 +71,33 @@ const TaxonSearch: React.FC<TaxonSearchProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
     
-    // Arrow down
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setHighlightedIndex(prev => 
         prev < results.length - 1 ? prev + 1 : prev
       );
     }
-    // Arrow up
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightedIndex(prev => prev > 0 ? prev - 1 : 0);
     }
-    // Enter
     else if (e.key === 'Enter' && highlightedIndex >= 0) {
       e.preventDefault();
       handleSelect(results[highlightedIndex]);
     }
-    // Escape
     else if (e.key === 'Escape') {
       setIsOpen(false);
+    }
+  };
+
+  const getStatusColor = (status: string | undefined) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'synonym':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -129,13 +134,26 @@ const TaxonSearch: React.FC<TaxonSearchProps> = ({
               onClick={() => handleSelect(taxon)}
               className={`cursor-pointer select-none relative py-2 pl-3 pr-9 ${
                 index === highlightedIndex
-                  ? 'bg-green-100 text-green-900'
-                  : 'text-gray-900 hover:bg-gray-100'
+                  ? 'bg-green-50'
+                  : 'hover:bg-gray-50'
               }`}
             >
               <div className="flex flex-col">
-                <span className="font-medium">{taxon.scientificName}</span>
-                <span className="text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium italic">{taxon.scientificName}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(taxon.status)}`}>
+                    {taxon.status || 'Unknown'}
+                  </span>
+                </div>
+                
+                {taxon.status?.toLowerCase() === 'synonym' && taxon.acceptedName && (
+                  <div className="flex items-center text-sm text-gray-600 mt-1">
+                    <ArrowRight className="h-3 w-3 mr-1" />
+                    <span className="italic">{taxon.acceptedName}</span>
+                  </div>
+                )}
+                
+                <span className="text-sm text-gray-500 mt-1">
                   {taxon.rank}{taxon.kingdom ? ` • ${taxon.kingdom}` : ''}
                   {taxon.family ? ` • ${taxon.family}` : ''}
                 </span>

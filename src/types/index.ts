@@ -5,6 +5,7 @@ export interface Taxon {
   scientificName: string;
   rank: string;
   status?: string;
+  acceptedName?: string; // Added for synonym handling
   kingdom?: string;
   phylum?: string;
   class?: string;

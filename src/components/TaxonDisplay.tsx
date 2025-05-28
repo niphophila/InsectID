@@ -1,7 +1,7 @@
 import React from 'react';
 import { Taxon } from '../types';
 import { getGbifSpeciesPageUrl } from '../services/gbifService';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ArrowRight } from 'lucide-react';
 
 interface TaxonDisplayProps {
   taxon: Taxon;
@@ -14,7 +14,17 @@ const TaxonDisplay: React.FC<TaxonDisplayProps> = ({ taxon }) => {
 
   const gbifUrl = getGbifSpeciesPageUrl(taxon.key);
 
-  // Helper function to render taxonomy hierarchy
+  const getStatusColor = (status: string | undefined) => {
+    switch (status?.toLowerCase()) {
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'synonym':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const renderTaxonomyHierarchy = () => {
     const taxonomyLevels = [
       { label: 'Kingdom', value: taxon.kingdom },
@@ -24,7 +34,7 @@ const TaxonDisplay: React.FC<TaxonDisplayProps> = ({ taxon }) => {
       { label: 'Family', value: taxon.family },
       { label: 'Genus', value: taxon.genus },
       { label: 'Species', value: taxon.species }
-    ].filter(level => level.value); // Filter out empty levels
+    ].filter(level => level.value);
     
     if (taxonomyLevels.length === 0) return null;
     
@@ -44,16 +54,24 @@ const TaxonDisplay: React.FC<TaxonDisplayProps> = ({ taxon }) => {
     <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm transition-all duration-300 hover:shadow-md">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-lg font-semibold italic">{taxon.scientificName}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold italic">{taxon.scientificName}</h3>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(taxon.status)}`}>
+              {taxon.status || 'Unknown'}
+            </span>
+          </div>
+          
+          {taxon.status?.toLowerCase() === 'synonym' && taxon.acceptedName && (
+            <div className="flex items-center text-sm text-gray-600 mt-1">
+              <ArrowRight className="h-4 w-4 mr-1" />
+              <span className="italic">{taxon.acceptedName}</span>
+            </div>
+          )}
+          
           <div className="flex items-center mt-1 space-x-2">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
               {taxon.rank}
             </span>
-            {taxon.status && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                {taxon.status}
-              </span>
-            )}
           </div>
         </div>
         <a 
